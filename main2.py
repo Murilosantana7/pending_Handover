@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import shutil
 import gspread
+import gspread.utils  # Importação necessária
 import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -45,7 +46,7 @@ def rename_downloaded_file2(download_dir, download_path2):
 
 
 # ==============================
-# Funções de atualização Google Sheets
+# Funções de atualização Google Sheets (SEM PISCAR)
 # ==============================
 def update_packing_google_sheets(csv_file_path):
     try:
@@ -55,19 +56,54 @@ def update_packing_google_sheets(csv_file_path):
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_name("hxh.json", scope)
         client = gspread.authorize(creds)
-        sheet1 = client.open_by_url(
-            "https://docs.google.com/spreadsheets/d/1LZ8WUrgN36Hk39f7qDrsRwvvIy1tRXLVbl3-wSQn-Pc/edit#gid=734921183"
+        
+        # --- USA O NOVO ID DA PLANILHA ---
+        sheet1 = client.open_by_key(
+            "1qvgVViwnLVkzLnjfWQLU3m6ce0f3lXrvg-aq2YF59v8"
         )
         worksheet1 = sheet1.worksheet("Base Pending")
+
+        # 1. Preparar novos dados
         df = pd.read_csv(csv_file_path).fillna("")
-        worksheet1.clear()
-        worksheet1.update([df.columns.values.tolist()] + df.values.tolist())
-        print(f"Arquivo enviado com sucesso para a aba 'Base Pending'.")
+        data_to_write = [df.columns.values.tolist()] + df.values.tolist()
+        new_rows = len(data_to_write)
+        new_cols = len(data_to_write[0]) if new_rows > 0 else 0
+
+        if new_rows == 0:
+            worksheet1.clear()
+            print(f"Arquivo CSV {csv_file_path} está vazio. Limpando a aba 'Base Pending'.")
+            return
+
+        # 2. Obter dimensões totais da planilha
+        total_rows = worksheet1.row_count
+        total_cols = worksheet1.col_count
+
+        # 3. Escrever os novos dados (sem limpar primeiro)
+        # --- DESTINO ATUAL: A1 ---
+        worksheet1.update(data_to_write, 'A1')
+
+        # 4. Definir os ranges para limpar dados "fantasmas"
+        ranges_to_clear = []
+
+        if new_rows < total_rows:
+            start_cell_rows = gspread.utils.rowcol_to_a1(new_rows + 1, 1)
+            end_cell_rows = gspread.utils.rowcol_to_a1(total_rows, total_cols)
+            ranges_to_clear.append(f"{start_cell_rows}:{end_cell_rows}")
+
+        if new_cols < total_cols:
+            start_cell_cols = gspread.utils.rowcol_to_a1(1, new_cols + 1)
+            end_cell_cols = gspread.utils.rowcol_to_a1(new_rows, total_cols)
+            ranges_to_clear.append(f"{start_cell_cols}:{end_cell_cols}")
+        
+        if ranges_to_clear:
+            worksheet1.batch_clear(ranges_to_clear)
+
+        print(f"Arquivo enviado com sucesso para a aba 'Base Pending' (sem piscar).")
     except Exception as e:
         print(f"Erro durante o processo: {e}")
 
 # ==============================
-# Funções de atualização Google Sheets
+# Funções de atualização Google Sheets (SEM PISCAR)
 # ==============================
 def update_packing_google_sheets2(csv_file_path2):
     try:
@@ -77,14 +113,49 @@ def update_packing_google_sheets2(csv_file_path2):
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_name("hxh.json", scope)
         client = gspread.authorize(creds)
-        sheet1 = client.open_by_url(
-            "https://docs.google.com/spreadsheets/d/1LZ8WUrgN36Hk39f7qDrsRwvvIy1tRXLVbl3-wSQn-Pc/edit#gid=734921183"
+        
+        # --- USA O NOVO ID DA PLANILHA ---
+        sheet1 = client.open_by_key(
+            "1qvgVViwnLVkzLnjfWQLU3m6ce0f3lXrvg-aq2YF59v8"
         )
         worksheet1 = sheet1.worksheet("Base Handedover")
+        
+        # 1. Preparar novos dados
         df = pd.read_csv(csv_file_path2).fillna("")
-        worksheet1.clear()
-        worksheet1.update([df.columns.values.tolist()] + df.values.tolist())
-        print(f"Arquivo enviado com sucesso para a aba 'Base Pending'.")
+        data_to_write = [df.columns.values.tolist()] + df.values.tolist()
+        new_rows = len(data_to_write)
+        new_cols = len(data_to_write[0]) if new_rows > 0 else 0
+
+        if new_rows == 0:
+            worksheet1.clear()
+            print(f"Arquivo CSV {csv_file_path2} está vazio. Limpando a aba 'Base Handedover'.")
+            return
+
+        # 2. Obter dimensões totais da planilha
+        total_rows = worksheet1.row_count
+        total_cols = worksheet1.col_count
+
+        # 3. Escrever os novos dados (sem limpar primeiro)
+        # --- DESTINO ATUAL: A1 ---
+        worksheet1.update(data_to_write, 'A1')
+
+        # 4. Definir os ranges para limpar dados "fantasmas"
+        ranges_to_clear = []
+
+        if new_rows < total_rows:
+            start_cell_rows = gspread.utils.rowcol_to_a1(new_rows + 1, 1)
+            end_cell_rows = gspread.utils.rowcol_to_a1(total_rows, total_cols)
+            ranges_to_clear.append(f"{start_cell_rows}:{end_cell_rows}")
+
+        if new_cols < total_cols:
+            start_cell_cols = gspread.utils.rowcol_to_a1(1, new_cols + 1)
+            end_cell_cols = gspread.utils.rowcol_to_a1(new_rows, total_cols)
+            ranges_to_clear.append(f"{start_cell_cols}:{end_cell_cols}")
+        
+        if ranges_to_clear:
+            worksheet1.batch_clear(ranges_to_clear)
+
+        print(f"Arquivo enviado com sucesso para a aba 'Base Handedover' (sem piscar).")
     except Exception as e:
         print(f"Erro durante o processo: {e}")
         
@@ -116,7 +187,6 @@ async def main():
             # ================== DOWNLOAD 1: PENDING ==================
             print("\nIniciando Download 1: Base Pending")
             await page.goto("https://spx.shopee.com.br/#/hubLinehaulTrips/trip")
-            # ATENÇÃO: Substitua esperas fixas por esperas de elementos quando possível
             await page.wait_for_timeout(8000) 
             
             # Clicando no filtro específico para "Pending" (ajuste o seletor se necessário)
@@ -126,7 +196,6 @@ async def main():
             await page.wait_for_timeout(10000)
 
             await page.goto("https://spx.shopee.com.br/#/taskCenter/exportTaskCenter")
-            # Use a lógica de espera robusta que discutimos anteriormente aqui!
             await page.wait_for_timeout(12000)
             
             async with page.expect_download() as download_info:
@@ -175,6 +244,5 @@ async def main():
         finally:
             await browser.close()
 
-# Não se esqueça de adicionar as duas funções unificadas no topo do seu script!
 if __name__ == "__main__":
     asyncio.run(main())
