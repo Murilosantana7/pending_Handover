@@ -20,7 +20,7 @@ jobs:
 
       - name: Restaurar hxh.json a partir do segredo
         run: |
-          echo "GCP_JSON_BASE64" | base64 -d > hxh.json
+          echo "$GCP_JSON_BASE64" | base64 -d > hxh.json
         shell: bash
         env:
           GCP_JSON_BASE64: ${{ secrets.GCP_JSON_BASE64 }}
