@@ -1,4 +1,4 @@
-import asyncio
+## quando for voltar a usar, apagar aqui import asyncio
 from playwright.async_api import async_playwright
 from datetime import datetime
 import os
